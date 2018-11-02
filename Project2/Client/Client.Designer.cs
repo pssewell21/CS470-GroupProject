@@ -28,11 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-
             this.outputTextBlock = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.startButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
-
             // 
             // outputTextBlock
             // 
@@ -50,24 +49,37 @@
             this.label1.Size = new System.Drawing.Size(42, 13);
             this.label1.TabIndex = 1;
             this.label1.Text = "Output:";
-            //
+            // 
+            // startButton
+            // 
+            this.startButton.Location = new System.Drawing.Point(344, 95);
+            this.startButton.Name = "startButton";
+            this.startButton.Size = new System.Drawing.Size(75, 23);
+            this.startButton.TabIndex = 2;
+            this.startButton.Text = "Start";
+            this.startButton.UseVisualStyleBackColor = true;
+            this.startButton.Click += new System.EventHandler(this.startButton_Click);
+            // 
             // Client
-            //
+            // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.startButton);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.outputTextBlock);
             this.Name = "Client";
             this.Text = "Client";
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         #endregion
 
         private System.Windows.Forms.TextBox outputTextBlock;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button startButton;
     }
 }
 
