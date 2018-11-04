@@ -13,7 +13,7 @@ namespace Server
         private const int BUFFER_SIZE = 8192;
         private const int TIMEOUT = 5000;
 
-        private const string REQUEST_STRING = "GetData";
+        private const string DISCOVER_MESSAGE = "DiscoverServer";
 
         public Server()
         {
@@ -37,14 +37,14 @@ namespace Server
                     var clientRequestData = udpClient.Receive(ref endPoint);
                     var clientRequest = Encoding.ASCII.GetString(clientRequestData);
 
-                    if (clientRequest.Equals(REQUEST_STRING))
+                    if (clientRequest.Equals(DISCOVER_MESSAGE))
                     {
-                        outputTextBlock.Text += $"{DateTime.Now}: Received {clientRequest} from {endPoint.Address.ToString()}. Sending response{Environment.NewLine}{Environment.NewLine}";
+                        outputTextBlock.Text += $"{DateTime.Now}: Received \"{clientRequest}\" from {endPoint.Address.ToString()}. Sending response{Environment.NewLine}{Environment.NewLine}";
                         udpClient.Send(responseData, responseData.Length, endPoint);
                     }
                     else
                     {
-                        outputTextBlock.Text += $"{DateTime.Now}: Received {clientRequest} from {endPoint.Address.ToString()}. Unrecognized command{Environment.NewLine}{Environment.NewLine}";
+                        outputTextBlock.Text += $"{DateTime.Now}: Received \"{clientRequest}\" from {endPoint.Address.ToString()}. Unrecognized message{Environment.NewLine}{Environment.NewLine}";
                     }
 
                     outputTextBlock.Refresh();

@@ -30,7 +30,8 @@
         {
             this.outputTextBlock = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.startButton = new System.Windows.Forms.Button();
+            this.discoverServerButton = new System.Windows.Forms.Button();
+            this.getDataButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // outputTextBlock
@@ -51,22 +52,34 @@
             this.label1.TabIndex = 1;
             this.label1.Text = "Output:";
             // 
-            // startButton
+            // discoverServerButton
             // 
-            this.startButton.Location = new System.Drawing.Point(344, 95);
-            this.startButton.Name = "startButton";
-            this.startButton.Size = new System.Drawing.Size(75, 23);
-            this.startButton.TabIndex = 2;
-            this.startButton.Text = "Start";
-            this.startButton.UseVisualStyleBackColor = true;
-            this.startButton.Click += new System.EventHandler(this.startButton_Click);
+            this.discoverServerButton.Location = new System.Drawing.Point(177, 106);
+            this.discoverServerButton.Name = "discoverServerButton";
+            this.discoverServerButton.Size = new System.Drawing.Size(96, 23);
+            this.discoverServerButton.TabIndex = 2;
+            this.discoverServerButton.Text = "Discover Server";
+            this.discoverServerButton.UseVisualStyleBackColor = true;
+            this.discoverServerButton.Click += new System.EventHandler(this.discoverServerButton_Click);
+            // 
+            // getDataButton
+            // 
+            this.getDataButton.Enabled = false;
+            this.getDataButton.Location = new System.Drawing.Point(279, 106);
+            this.getDataButton.Name = "getDataButton";
+            this.getDataButton.Size = new System.Drawing.Size(96, 23);
+            this.getDataButton.TabIndex = 3;
+            this.getDataButton.Text = "Get Data";
+            this.getDataButton.UseVisualStyleBackColor = true;
+            this.getDataButton.Click += new System.EventHandler(this.getDataButton_Click);
             // 
             // Client
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.startButton);
+            this.Controls.Add(this.getDataButton);
+            this.Controls.Add(this.discoverServerButton);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.outputTextBlock);
             this.Name = "Client";
@@ -80,7 +93,8 @@
 
         private System.Windows.Forms.TextBox outputTextBlock;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Button startButton;
+        private System.Windows.Forms.Button discoverServerButton;
+        private System.Windows.Forms.Button getDataButton;
     }
 }
 
