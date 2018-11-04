@@ -9,6 +9,10 @@ namespace Client
     public partial class Client : Form
     {
         private const int PORT = 800;
+        private const int TIMEOUT = 5000;
+
+        private const string REQUEST_STRING = "GetData";
+        private const string REQUEST_BADSTRING = "BadRequest";
 
         public Client()
         {
@@ -17,10 +21,13 @@ namespace Client
 
         private void startButton_Click(object sender, EventArgs e)
         {
-            outputTextBlock.Text += $"Client Started...{Environment.NewLine}";
+            outputTextBlock.Text += $"{DateTime.Now}: Client Started...{Environment.NewLine}";
 
             var udpClient = new UdpClient();
-            var requestData = Encoding.ASCII.GetBytes("SomeRequestData");
+            udpClient.Client.ReceiveTimeout = TIMEOUT;
+
+            //var requestData = Encoding.ASCII.GetBytes(REQUEST_STRING);
+            var requestData = Encoding.ASCII.GetBytes(REQUEST_BADSTRING);
             var endPoint = new IPEndPoint(IPAddress.Any, 0);
 
             udpClient.EnableBroadcast = true;
@@ -28,7 +35,7 @@ namespace Client
 
             var serverResponseData = udpClient.Receive(ref endPoint);
             var serverResponse = Encoding.ASCII.GetString(serverResponseData);
-            outputTextBlock.Text += $"Recived {serverResponseData} from {serverResponse}";
+            outputTextBlock.Text += $"{DateTime.Now}: Recived {serverResponse} from {endPoint.Address.ToString()}{Environment.NewLine}{Environment.NewLine}";
 
             udpClient.Close();
         }

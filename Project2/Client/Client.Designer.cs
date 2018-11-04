@@ -38,6 +38,7 @@
             this.outputTextBlock.Location = new System.Drawing.Point(76, 241);
             this.outputTextBlock.Multiline = true;
             this.outputTextBlock.Name = "outputTextBlock";
+            this.outputTextBlock.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.outputTextBlock.Size = new System.Drawing.Size(712, 197);
             this.outputTextBlock.TabIndex = 0;
             // 
