@@ -22,31 +22,38 @@ namespace Server
 
         private void startButton_Click(object sender, EventArgs e)
         {
-            outputTextBlock.Text += $"{DateTime.Now}: Server Started...{Environment.NewLine}";
-            outputTextBlock.Refresh();
-
-            var udpClient = new UdpClient(PORT);
-            udpClient.Client.ReceiveTimeout = TIMEOUT;
-
-            while (true)
+            try
             {
-                var responseData = Encoding.ASCII.GetBytes("Hello World");
-
-                var endPoint = new IPEndPoint(IPAddress.Any, 0);
-                var clientRequestData = udpClient.Receive(ref endPoint);
-                var clientRequest = Encoding.ASCII.GetString(clientRequestData);
-
-                if (clientRequest.Equals(REQUEST_STRING))
-                {
-                    outputTextBlock.Text += $"{DateTime.Now}: Received {clientRequest} from {endPoint.Address.ToString()}. Sending response{Environment.NewLine}{Environment.NewLine}";
-                    udpClient.Send(responseData, responseData.Length, endPoint);
-                }
-                else
-                {
-                    outputTextBlock.Text += $"{DateTime.Now}: Received {clientRequest} from {endPoint.Address.ToString()}. Unrecognized command{Environment.NewLine}{Environment.NewLine}";
-                }
-                
+                outputTextBlock.Text += $"{DateTime.Now}: Server Started...{Environment.NewLine}";
                 outputTextBlock.Refresh();
+
+                var udpClient = new UdpClient(PORT);
+
+                while (true)
+                {
+                    var responseData = Encoding.ASCII.GetBytes("Hello World");
+
+                    var endPoint = new IPEndPoint(IPAddress.Any, 0);
+                    var clientRequestData = udpClient.Receive(ref endPoint);
+                    var clientRequest = Encoding.ASCII.GetString(clientRequestData);
+
+                    if (clientRequest.Equals(REQUEST_STRING))
+                    {
+                        outputTextBlock.Text += $"{DateTime.Now}: Received {clientRequest} from {endPoint.Address.ToString()}. Sending response{Environment.NewLine}{Environment.NewLine}";
+                        udpClient.Send(responseData, responseData.Length, endPoint);
+                    }
+                    else
+                    {
+                        outputTextBlock.Text += $"{DateTime.Now}: Received {clientRequest} from {endPoint.Address.ToString()}. Unrecognized command{Environment.NewLine}{Environment.NewLine}";
+                    }
+
+                    outputTextBlock.Refresh();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Error Occurred");
+                Environment.Exit(1);
             }
         }
     }

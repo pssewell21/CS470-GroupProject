@@ -21,23 +21,48 @@ namespace Client
 
         private void startButton_Click(object sender, EventArgs e)
         {
-            outputTextBlock.Text += $"{DateTime.Now}: Client Started...{Environment.NewLine}";
+            try
+            { 
+                outputTextBlock.Text += $"{DateTime.Now}: Client Started...{Environment.NewLine}";
+                outputTextBlock.Refresh();
 
-            var udpClient = new UdpClient();
-            udpClient.Client.ReceiveTimeout = TIMEOUT;
+                var udpClient = new UdpClient();
+                udpClient.Client.ReceiveTimeout = TIMEOUT;
 
-            //var requestData = Encoding.ASCII.GetBytes(REQUEST_STRING);
-            var requestData = Encoding.ASCII.GetBytes(REQUEST_BADSTRING);
-            var endPoint = new IPEndPoint(IPAddress.Any, 0);
+                var requestData = Encoding.ASCII.GetBytes(REQUEST_STRING);
+                //var requestData = Encoding.ASCII.GetBytes(REQUEST_BADSTRING);
+                var endPoint = new IPEndPoint(IPAddress.Any, 0);
 
-            udpClient.EnableBroadcast = true;
-            udpClient.Send(requestData, requestData.Length, new IPEndPoint(IPAddress.Broadcast, PORT));
+                udpClient.EnableBroadcast = true;
+                udpClient.Send(requestData, requestData.Length, new IPEndPoint(IPAddress.Broadcast, PORT));
 
-            var serverResponseData = udpClient.Receive(ref endPoint);
-            var serverResponse = Encoding.ASCII.GetString(serverResponseData);
-            outputTextBlock.Text += $"{DateTime.Now}: Recived {serverResponse} from {endPoint.Address.ToString()}{Environment.NewLine}{Environment.NewLine}";
+                try
+                {
+                    var serverResponseData = udpClient.Receive(ref endPoint);
+                    var serverResponse = Encoding.ASCII.GetString(serverResponseData);
 
-            udpClient.Close();
+                    outputTextBlock.Text += $"{DateTime.Now}: Recived {serverResponse} from {endPoint.Address.ToString()}{Environment.NewLine}{Environment.NewLine}";
+                }
+                catch (SocketException se)
+                {
+                    if (se.SocketErrorCode == SocketError.TimedOut)
+                    {
+                        outputTextBlock.Text += $"{DateTime.Now}: Connection timed out waiting for a response from the server{Environment.NewLine}{Environment.NewLine}";
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+
+                outputTextBlock.Refresh();
+                udpClient.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Error Occurred");
+                Environment.Exit(1);
+            }
         }
     }
 }
