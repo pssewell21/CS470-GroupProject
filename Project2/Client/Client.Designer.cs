@@ -32,6 +32,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.discoverServerButton = new System.Windows.Forms.Button();
             this.getDataButton = new System.Windows.Forms.Button();
+            this.disconnectButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // outputTextBlock
@@ -73,11 +74,23 @@
             this.getDataButton.UseVisualStyleBackColor = true;
             this.getDataButton.Click += new System.EventHandler(this.getDataButton_Click);
             // 
+            // disconnectButton
+            // 
+            this.disconnectButton.Enabled = false;
+            this.disconnectButton.Location = new System.Drawing.Point(381, 106);
+            this.disconnectButton.Name = "disconnectButton";
+            this.disconnectButton.Size = new System.Drawing.Size(96, 23);
+            this.disconnectButton.TabIndex = 4;
+            this.disconnectButton.Text = "Disconnect";
+            this.disconnectButton.UseVisualStyleBackColor = true;
+            this.disconnectButton.Click += new System.EventHandler(this.disconnectButton_Click);
+            // 
             // Client
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.disconnectButton);
             this.Controls.Add(this.getDataButton);
             this.Controls.Add(this.discoverServerButton);
             this.Controls.Add(this.label1);
@@ -95,6 +108,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button discoverServerButton;
         private System.Windows.Forms.Button getDataButton;
+        private System.Windows.Forms.Button disconnectButton;
     }
 }
 

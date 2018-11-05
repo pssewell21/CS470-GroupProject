@@ -19,7 +19,8 @@ namespace Server
         private const string DISCOVER_MESSAGE = "DiscoverServer";
         private const string GET_DATA_MESSAGE = "GetData";
 
-        private IPEndPoint _endPoint;
+        private IPEndPoint _discoveryEndPoint;
+        private IPEndPoint _clientEndPoint;
         private Socket _socket;
 
         public Server()
@@ -34,13 +35,15 @@ namespace Server
                 outputTextBlock.Text += $"{DateTime.Now}: Server Started...{Environment.NewLine}";
                 outputTextBlock.Refresh();
 
-                //var udpClient = new UdpClient(PORT);
+                var udpClient = new UdpClient(NETWORK_DISCOVERY_PORT);
+
+                _clientEndPoint = new IPEndPoint(IPAddress.Any, CLIENT_CONNECTION_PORT);
 
                 // Create a new socket for clients to connect to
                 _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
 
-                // Bind to the IP address found above using the default port
-                _socket.Bind(new IPEndPoint(IPAddress.Any, PORT));
+                // Bind using the default port
+                _socket.Bind(_clientEndPoint);
                 _socket.Listen(BUFFER_SIZE);
 
                 Thread.Sleep(1000);
@@ -48,6 +51,25 @@ namespace Server
                 // Busy wait for clients to connect
                 while (true)
                 {
+                    var responseData = Encoding.ASCII.GetBytes("Hello World");
+
+                    _discoveryEndPoint = new IPEndPoint(IPAddress.Any, 0);
+                    var clientRequestData = udpClient.Receive(ref _discoveryEndPoint);
+                    var clientRequest = Encoding.ASCII.GetString(clientRequestData);
+
+                    if (clientRequest.Equals(DISCOVER_MESSAGE))
+                    {
+                        outputTextBlock.Text += $"{DateTime.Now}: Received \"{clientRequest}\" from {_discoveryEndPoint.Address.ToString()}. Sending response{Environment.NewLine}{Environment.NewLine}";
+                        outputTextBlock.Refresh();
+
+                        udpClient.Send(responseData, responseData.Length, _discoveryEndPoint);
+                    }
+                    else
+                    {
+                        outputTextBlock.Text += $"{DateTime.Now}: Received \"{clientRequest}\" from {_discoveryEndPoint.Address.ToString()}. Unrecognized message{Environment.NewLine}{Environment.NewLine}";
+                        outputTextBlock.Refresh();
+                    }
+
                     // Accept incoming connections
                     var socket = _socket.Accept();
 
@@ -64,31 +86,6 @@ namespace Server
                         throw task.Exception;
                     }
                 }
-
-                //while (true)
-                //{
-                //    var responseData = Encoding.ASCII.GetBytes("Hello World");
-                //
-                //    var endPoint = new IPEndPoint(IPAddress.Any, 0);
-                //    var clientRequestData = udpClient.Receive(ref endPoint);
-                //    var clientRequest = Encoding.ASCII.GetString(clientRequestData);
-                //
-                //    if (clientRequest.Equals(DISCOVER_MESSAGE))
-                //    {
-                //        outputTextBlock.Text += $"{DateTime.Now}: Received \"{clientRequest}\" from {endPoint.Address.ToString()}. Sending response{Environment.NewLine}{Environment.NewLine}";
-                //        udpClient.Send(responseData, responseData.Length, endPoint);
-                //    }
-                //    else if (clientRequest.Equals(DISCOVER_MESSAGE))
-                //    {
-                //
-                //    }
-                //    else
-                //    {
-                //        outputTextBlock.Text += $"{DateTime.Now}: Received \"{clientRequest}\" from {endPoint.Address.ToString()}. Unrecognized message{Environment.NewLine}{Environment.NewLine}";
-                //    }
-                //
-                //    outputTextBlock.Refresh();
-                //}
             }
             catch (Exception ex)
             {
@@ -114,27 +111,14 @@ namespace Server
                         // Convert to a string
                         var dataReceived = Encoding.ASCII.GetString(bytes, 0, bytesRead);
 
-                        if (dataReceived.Equals(DISCOVER_MESSAGE))
+                        if (dataReceived.Equals(GET_DATA_MESSAGE))
                         {
-                            outputTextBlock.Text += $"{DateTime.Now}: Received \"{dataReceived}\" from {socket.RemoteEndPoint}. Sending Discovery Message{Environment.NewLine}{Environment.NewLine}";
+                            var response = "Sending you data";
 
-
-                            //udpClient.Send(responseData, responseData.Length, endPoint);
+                            // Convert and send the response to the client
+                            var responseBytes = Encoding.ASCII.GetBytes(response);
+                            socket.Send(responseBytes);
                         }
-                        else if (dataReceived.Equals(GET_DATA_MESSAGE))
-                        {
-                            outputTextBlock.Text += $"{DateTime.Now}: Received \"{dataReceived}\" from {socket.RemoteEndPoint}. Sending Data Message{Environment.NewLine}{Environment.NewLine}";
-
-                            //udpClient.Send(responseData, responseData.Length, endPoint);
-                        }
-                        else
-                        {
-                            outputTextBlock.Text += $"{DateTime.Now}: Received \"{dataReceived}\" from {socket.RemoteEndPoint}. Unrecognized message{Environment.NewLine}{Environment.NewLine}";
-                        }
-
-                        // Don't need to wait so busily. I can probably take this out, I don't think it solved the problem 
-                        // I was trying to fix, but I don't want to risk breaking anything else and 300ms is plently responsive
-                        //Thread.Sleep(300);
                     }
                 }
             }
