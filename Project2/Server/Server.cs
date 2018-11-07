@@ -13,7 +13,7 @@ namespace Server
         // The default port number to listen for client connections
         private const int NETWORK_DISCOVERY_PORT = 800;
         private const int CLIENT_CONNECTION_PORT = 801;
-        private const int BUFFER_SIZE = 8192;
+        private const int MAX_QUEUED_CONNECTIONS = 8192;
         private const int TIMEOUT = 5000;
 
         private const string DISCOVER_MESSAGE = "DiscoverServer";
@@ -44,7 +44,7 @@ namespace Server
 
                 // Bind using the default port
                 _socket.Bind(_clientEndPoint);
-                _socket.Listen(BUFFER_SIZE);
+                _socket.Listen(MAX_QUEUED_CONNECTIONS);
 
                 Thread.Sleep(1000);
 
