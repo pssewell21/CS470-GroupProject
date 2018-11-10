@@ -35,13 +35,11 @@ namespace Client
             InitializeComponent();
         }
 
-        private bool DiscoverServer()
+        private void DiscoverServer()
         {
             // Sets up a different thread to send messages to the server
             var thread = new Thread(() => FindServer());
             thread.Start();
-
-            return _serverIpAddress != null;
         }
 
         private void FindServer()
@@ -50,11 +48,13 @@ namespace Client
             {
                 AppendTextBox($"Discovering Server...");
 
+                _serverIpAddress = null;
+
                 _udpClient = new UdpClient();
                 _udpClient.Client.ReceiveTimeout = TIMEOUT;
 
-                //var requestData = Encoding.ASCII.GetBytes(DISCOVER_MESSAGE);
-                var requestData = Encoding.ASCII.GetBytes(INVALID_MESSAGE);
+                var requestData = Encoding.ASCII.GetBytes(DISCOVER_MESSAGE);
+                //var requestData = Encoding.ASCII.GetBytes(INVALID_MESSAGE);
 
                 _discoveryEndPoint = new IPEndPoint(IPAddress.Broadcast, NETWORK_DISCOVERY_PORT);
                 _udpClient.EnableBroadcast = true;
@@ -210,15 +210,12 @@ namespace Client
             RunButton.Enabled = false;
             RunButton.Refresh();
 
-            if (DiscoverServer())
+            DiscoverServer();
+
+            if (_serverIpAddress != null)
             {
-                AppendTextBox($"Server found at {_serverIpAddress}");
                 GetData();
                 Disconnect();
-            }
-            else
-            {
-                AppendTextBox("Server not found");
             }
 
             RunButton.Enabled = true;
