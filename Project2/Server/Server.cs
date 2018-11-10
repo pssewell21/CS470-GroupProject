@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -22,6 +24,7 @@ namespace Server
         private IPEndPoint _discoveryEndPoint;
         private IPEndPoint _clientEndPoint;
         private Socket _socket;
+        private IPAddress _localIpAddress;
 
         public Server()
         {
@@ -50,10 +53,8 @@ namespace Server
 
                 // Busy wait for clients to connect
                 while (true)
-                {
-                    var responseData = Encoding.ASCII.GetBytes("Hello World");
-
-                    _discoveryEndPoint = new IPEndPoint(IPAddress.Any, 0);
+                {  
+                    _discoveryEndPoint = new IPEndPoint(IPAddress.Any, NETWORK_DISCOVERY_PORT);
                     var clientRequestData = udpClient.Receive(ref _discoveryEndPoint);
                     var clientRequest = Encoding.ASCII.GetString(clientRequestData);
 
@@ -61,6 +62,42 @@ namespace Server
                     {
                         outputTextBlock.Text += $"{DateTime.Now}: Received \"{clientRequest}\" from {_discoveryEndPoint.Address.ToString()}. Sending response{Environment.NewLine}{Environment.NewLine}";
                         outputTextBlock.Refresh();
+
+                        var interfaces = NetworkInterface.GetAllNetworkInterfaces().Where(o => o.OperationalStatus == OperationalStatus.Up);
+
+                        // If we have more than 1 interface on the machine, a network connection exists (Assuming no vitual interfaces exist)
+                        if (interfaces.Count() > 1)
+                        {
+                            var upInterface = interfaces.Where(o => o.NetworkInterfaceType != NetworkInterfaceType.Loopback).FirstOrDefault();
+
+                            if (upInterface != null)
+                            {
+                                // Get the first IPv4 address bound to the NIC and use it
+                                var unicastAddress = upInterface.GetIPProperties().UnicastAddresses.Where(o => o.PrefixLength == 24).FirstOrDefault();
+
+                                if (unicastAddress != null)
+                                {
+                                    _localIpAddress = unicastAddress.Address;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Unable to get IP interface. Make sure you are connected to a network. Failing over to binding to the Loopback interface");
+                                    _localIpAddress = IPAddress.Loopback;
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine("Unable to get IP interface. Make sure you are connected to a network. Failing over to binding to the Loopback interface");
+                                _localIpAddress = IPAddress.Loopback;
+                            }
+                        }
+                        else
+                        {
+                            _localIpAddress = IPAddress.Loopback;
+                        }
+
+                        var responseData = Encoding.ASCII.GetBytes(_localIpAddress.ToString());
+
 
                         udpClient.Send(responseData, responseData.Length, _discoveryEndPoint);
                     }
