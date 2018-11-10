@@ -5,7 +5,6 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Server
@@ -21,48 +20,60 @@ namespace Server
         private const string DISCOVER_MESSAGE = "DiscoverServer";
         private const string GET_DATA_MESSAGE = "GetData";
 
+        private const string STORE_DATA = "This is data about our store";
+
         private IPEndPoint _discoveryEndPoint;
+        private UdpClient _udpClient;
         private IPEndPoint _clientEndPoint;
         private Socket _socket;
         private IPAddress _localIpAddress;
 
+        public delegate void delUpdateUiTextBox(string text);
+
         public Server()
         {
-            InitializeComponent(); 
+            InitializeComponent();
         }
 
-        private void startButton_Click(object sender, EventArgs e)
+        private void StartButton_Click(object sender, EventArgs ea)
         {
             try
             {
-                outputTextBlock.Text += $"{DateTime.Now}: Server Started...{Environment.NewLine}";
-                outputTextBlock.Refresh();
+                AppendTextBox($"Server Started...");
 
-                var udpClient = new UdpClient(NETWORK_DISCOVERY_PORT);
+                if (_udpClient == null)
+                {
+                    _udpClient = new UdpClient(NETWORK_DISCOVERY_PORT);
+                }
 
                 _clientEndPoint = new IPEndPoint(IPAddress.Any, CLIENT_CONNECTION_PORT);
 
-                // Create a new socket for clients to connect to
-                _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+                Thread.Sleep(300);
 
-                // Bind using the default port
-                _socket.Bind(_clientEndPoint);
-                _socket.Listen(MAX_QUEUED_CONNECTIONS);
+                // Sets up different threads to process messages from clients
+                var thread = new Thread(() => ListenForClients());
+                thread.Start();
+            }
+            catch (Exception e)
+            {
+                HandleException(e);
+            }
+        }
 
-                Thread.Sleep(1000);
-
+        private void ListenForClients()
+        {
+            try
+            {
                 // Busy wait for clients to connect
                 while (true)
-                {  
+                {
                     _discoveryEndPoint = new IPEndPoint(IPAddress.Any, NETWORK_DISCOVERY_PORT);
-                    var clientRequestData = udpClient.Receive(ref _discoveryEndPoint);
+                    var clientRequestData = _udpClient.Receive(ref _discoveryEndPoint);
                     var clientRequest = Encoding.ASCII.GetString(clientRequestData);
 
                     if (clientRequest.Equals(DISCOVER_MESSAGE))
                     {
-                        outputTextBlock.Text += $"{DateTime.Now}: Received \"{clientRequest}\" from {_discoveryEndPoint.Address.ToString()}. Sending response{Environment.NewLine}{Environment.NewLine}";
-                        outputTextBlock.Refresh();
-
+                        AppendTextBox($"Received \"{clientRequest}\" from {_discoveryEndPoint.ToString()}. Sending response");
                         var interfaces = NetworkInterface.GetAllNetworkInterfaces().Where(o => o.OperationalStatus == OperationalStatus.Up);
 
                         // If we have more than 1 interface on the machine, a network connection exists (Assuming no vitual interfaces exist)
@@ -81,13 +92,13 @@ namespace Server
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Unable to get IP interface. Make sure you are connected to a network. Failing over to binding to the Loopback interface");
+                                    AppendTextBox($"Unable to get IP interface. Make sure you are connected to a network. Failing over to binding to the Loopback interface");
                                     _localIpAddress = IPAddress.Loopback;
                                 }
                             }
                             else
                             {
-                                Console.WriteLine("Unable to get IP interface. Make sure you are connected to a network. Failing over to binding to the Loopback interface");
+                                AppendTextBox($"Unable to get IP interface. Make sure you are connected to a network. Failing over to binding to the Loopback interface");
                                 _localIpAddress = IPAddress.Loopback;
                             }
                         }
@@ -98,36 +109,36 @@ namespace Server
 
                         var responseData = Encoding.ASCII.GetBytes(_localIpAddress.ToString());
 
-
-                        udpClient.Send(responseData, responseData.Length, _discoveryEndPoint);
+                        _udpClient.Send(responseData, responseData.Length, _discoveryEndPoint);
                     }
                     else
                     {
-                        outputTextBlock.Text += $"{DateTime.Now}: Received \"{clientRequest}\" from {_discoveryEndPoint.Address.ToString()}. Unrecognized message{Environment.NewLine}{Environment.NewLine}";
-                        outputTextBlock.Refresh();
+                        AppendTextBox($"Received \"{clientRequest}\" from {_discoveryEndPoint.ToString()}. Unrecognized message");
+                    }
+
+                    // Create a new socket for clients to connect to
+                    if (_socket == null)
+                    {
+                        _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+
+                        // Bind using the default port
+                        _socket.Bind(_clientEndPoint);
+                        _socket.Listen(MAX_QUEUED_CONNECTIONS);
                     }
 
                     // Accept incoming connections
                     var socket = _socket.Accept();
 
-                    outputTextBlock.Text += $"Client connected from {socket.RemoteEndPoint}{Environment.NewLine}";
-                    outputTextBlock.Refresh();
+                    AppendTextBox($"Client connected from {socket.RemoteEndPoint}");
 
-                    // Sets up async tasks that run on different threads to process messages from clients
-                    Task task = new Task(() => ProcessMessages(socket));
-                    task.Start();
-
-                    // If the task throws an exception, catch it and rethrow to handle it
-                    if (task.Exception != null)
-                    {
-                        throw task.Exception;
-                    }
+                    // Sets up different threads to process messages from clients
+                    var thread = new Thread(() => ProcessMessages(socket));
+                    thread.Start();
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                MessageBox.Show(ex.ToString(), "Error Occurred");
-                Environment.Exit(1);
+                HandleException(e);
             }
         }
 
@@ -150,19 +161,38 @@ namespace Server
 
                         if (dataReceived.Equals(GET_DATA_MESSAGE))
                         {
-                            var response = "Sending you data";
+                            AppendTextBox($"Received \"{dataReceived}\" from {socket.RemoteEndPoint}");
 
                             // Convert and send the response to the client
-                            var responseBytes = Encoding.ASCII.GetBytes(response);
+                            var responseBytes = Encoding.ASCII.GetBytes(STORE_DATA);
                             socket.Send(responseBytes);
                         }
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine(ex);
+                HandleException(e);
             }
+        }
+
+        private void AppendTextBox(string message)
+        {
+            if (InvokeRequired)
+            {
+                outputTextBlock.BeginInvoke(new delUpdateUiTextBox(AppendTextBox), message);
+
+                return;
+            }
+
+            outputTextBlock.Text = $"{DateTime.Now}: {message}{Environment.NewLine}{outputTextBlock.Text}";
+            outputTextBlock.Refresh();
+        }
+
+        private void HandleException(Exception e)
+        {
+            MessageBox.Show(e.ToString(), "Error Occurred");
+            Environment.Exit(1);
         }
     }
 }
