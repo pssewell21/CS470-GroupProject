@@ -5,6 +5,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Server
@@ -15,7 +16,6 @@ namespace Server
         private const int NETWORK_DISCOVERY_PORT = 800;
         private const int CLIENT_CONNECTION_PORT = 801;
         private const int MAX_QUEUED_CONNECTIONS = 8192;
-        private const int TIMEOUT = 5000;
 
         private const string DISCOVER_MESSAGE = "DiscoverServer";
         private const string GET_DATA_MESSAGE = "GetData";
@@ -41,6 +41,8 @@ namespace Server
             {
                 AppendTextBox($"Server Started...");
 
+                StartButton.Enabled = false;
+
                 if (_udpClient == null)
                 {
                     _udpClient = new UdpClient(NETWORK_DISCOVERY_PORT);
@@ -50,9 +52,8 @@ namespace Server
 
                 Thread.Sleep(300);
 
-                // Sets up different threads to process messages from clients
-                var thread = new Thread(() => ListenForClients());
-                thread.Start();
+                // Sets up a different thread to process network discovery messages from clients
+                Task.Run(() => ListenForClients());
             }
             catch (Exception e)
             {
@@ -67,6 +68,17 @@ namespace Server
                 // Busy wait for clients to connect
                 while (true)
                 {
+                    // Create a new socket for clients to connect to for getting store data
+                    if (_socket == null)
+                    {
+                        _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
+
+                        // Bind using the default port
+                        _socket.Bind(_clientEndPoint);
+                        _socket.Listen(MAX_QUEUED_CONNECTIONS);
+                    }
+
+                    // Receive network discovery messages from the client
                     _discoveryEndPoint = new IPEndPoint(IPAddress.Any, NETWORK_DISCOVERY_PORT);
                     var clientRequestData = _udpClient.Receive(ref _discoveryEndPoint);
                     var clientRequest = Encoding.ASCII.GetString(clientRequestData);
@@ -116,24 +128,13 @@ namespace Server
                         AppendTextBox($"Received \"{clientRequest}\" from {_discoveryEndPoint.ToString()}. Unrecognized message");
                     }
 
-                    // Create a new socket for clients to connect to
-                    if (_socket == null)
-                    {
-                        _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP);
-
-                        // Bind using the default port
-                        _socket.Bind(_clientEndPoint);
-                        _socket.Listen(MAX_QUEUED_CONNECTIONS);
-                    }
-
                     // Accept incoming connections
                     var socket = _socket.Accept();
 
                     AppendTextBox($"Client connected from {socket.RemoteEndPoint}");
 
-                    // Sets up different threads to process messages from clients
-                    var thread = new Thread(() => ProcessMessages(socket));
-                    thread.Start();
+                    // Sets up different threads to process data request messages from clients
+                    Task.Run(() => ProcessMessages(socket));
                 }
             }
             catch (Exception e)

@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Client
@@ -22,8 +23,6 @@ namespace Client
         private IPEndPoint _dataEndPoint;
         private Socket _socket;
         private IPAddress _serverIpAddress;
-
-        private bool findingServer;
                
         public delegate void delUpdateUiTextBox(string text);
 
@@ -35,11 +34,10 @@ namespace Client
             InitializeComponent();
         }
 
-        private void DiscoverServer()
+        private async Task DiscoverServer()
         {
             // Sets up a different thread to send messages to the server
-            var thread = new Thread(() => FindServer());
-            thread.Start();
+            await Task.Run(() => FindServer());
         }
 
         private void FindServer()
@@ -90,7 +88,7 @@ namespace Client
             }
         }
 
-        private void GetData()
+        private async Task GetData()
         {
             try
             {
@@ -128,8 +126,7 @@ namespace Client
                 }
 
                 // Sets up a different thread to send messages to the server
-                var thread = new Thread(() => GetDataFromServer());
-                thread.Start();
+                await Task.Run(() => GetDataFromServer());
             }
             catch (Exception e)
             {
@@ -205,16 +202,16 @@ namespace Client
             }
         }
 
-        private void RunButton_Click(object sender, EventArgs e)
+        private async void RunButton_Click(object sender, EventArgs e)
         {
             RunButton.Enabled = false;
             RunButton.Refresh();
 
-            DiscoverServer();
+            await DiscoverServer();
 
             if (_serverIpAddress != null)
             {
-                GetData();
+                await GetData();
                 Disconnect();
             }
 
