@@ -20,7 +20,9 @@ namespace Server
         private const string DISCOVER_MESSAGE = "DiscoverServer";
         private const string GET_DATA_MESSAGE = "GetData";
 
-        private const string STORE_DATA = "This is data about our store";
+        private string STORE_DATA = $"Welcome to Chick-Fil-A at Bridge Street Town Center in Huntsville, AL!{Environment.NewLine}" +
+            $"We think that we should be about more than just selling chicken. We should be a part of our customers’ lives and the communities in which we serve.{Environment.NewLine}" +
+            $"Visit us at chick-fil-a.com to learn more about our store and place an order.";
 
         private IPEndPoint _discoveryEndPoint;
         private UdpClient _udpClient;

@@ -44,7 +44,9 @@ namespace Client
         {
             try
             {
-                AppendTextBox($"Discovering Server...");
+#if DEBUG
+                DebugAppendTextBox($"Discovering Server...");
+#endif
 
                 _serverIpAddress = null;
 
@@ -64,7 +66,9 @@ namespace Client
                     var serverResponseData = _udpClient.Receive(ref endPoint);
                     var serverResponse = Encoding.ASCII.GetString(serverResponseData);
 
-                    AppendTextBox($"Received \"{serverResponse}\" from {endPoint.ToString()}. Ready to request data");
+#if DEBUG
+                    DebugAppendTextBox($"Received \"{serverResponse}\" from {endPoint.ToString()}. Ready to request data");
+#endif
 
                     _serverIpAddress = endPoint.Address;
                 }
@@ -72,7 +76,9 @@ namespace Client
                 {
                     if (se.SocketErrorCode == SocketError.TimedOut)
                     {
-                        AppendTextBox($"Connection timed out waiting for a response from the server");
+#if DEBUG
+                        DebugAppendTextBox($"Connection timed out waiting for a response from the server");
+#endif
                     }
                     else
                     {
@@ -92,7 +98,9 @@ namespace Client
         {
             try
             {
-                AppendTextBox($"Getting data from server...");
+#if DEBUG
+                DebugAppendTextBox($"Getting data from server...");
+#endif
 
                 // Create a new socket to connect to the server with
                 if (_socket == null)
@@ -116,11 +124,15 @@ namespace Client
 
                         if (_socket.Connected)
                         {
-                            AppendTextBox($"Client is connected using port {outboundPort}");
+#if DEBUG
+                            DebugAppendTextBox($"Client is connected using port {outboundPort}");
+#endif
                         }
                         else
                         {
-                            AppendTextBox($"Client is not connected");
+#if DEBUG
+                            DebugAppendTextBox($"Client is not connected");
+#endif
                         }
                     }
                 }
@@ -154,14 +166,20 @@ namespace Client
                     var serverResponse = Encoding.ASCII.GetString(bytes, 0, bytesRead);
 
                     // Display received data
-                    AppendTextBox($"Received \"{serverResponse}\" from {_socket.RemoteEndPoint}");
+#if DEBUG
+                    DebugAppendTextBox($"Received \"{serverResponse}\" from {_socket.RemoteEndPoint}");
+#else
+                    ReleaseAppendTextBox($"{serverResponse}");
+#endif
                 }
             }
             catch (SocketException se)
             {
                 if (se.SocketErrorCode == SocketError.TimedOut)
                 {
-                    AppendTextBox($"Connection timed out waiting for a response from the server");
+#if DEBUG
+                    DebugAppendTextBox($"Connection timed out waiting for a response from the server");
+#endif
                 }
                 else
                 {
@@ -185,7 +203,9 @@ namespace Client
                 {
                     if (_socket != null && _socket.Connected)
                     {
-                        AppendTextBox($"Disconnecting from the server");
+#if DEBUG
+                        DebugAppendTextBox($"Disconnecting from the server");
+#endif
 
                         _socket.Disconnect(false);
 
@@ -219,16 +239,29 @@ namespace Client
             RunButton.Refresh();
         }
 
-        private void AppendTextBox(string message)
+        private void DebugAppendTextBox(string message)
         {
             if (InvokeRequired)
             {
-                outputTextBlock.BeginInvoke(new delUpdateUiTextBox(AppendTextBox), message);
+                outputTextBlock.BeginInvoke(new delUpdateUiTextBox(DebugAppendTextBox), message);
 
                 return;
             }
 
             outputTextBlock.Text = $"{DateTime.Now}: {message}{Environment.NewLine}{outputTextBlock.Text}";
+            outputTextBlock.Refresh();
+        }
+        
+        private void ReleaseAppendTextBox(string message)
+        {
+            if (InvokeRequired)
+            {
+                outputTextBlock.BeginInvoke(new delUpdateUiTextBox(ReleaseAppendTextBox), message);
+
+                return;
+            }
+
+            outputTextBlock.Text = $"{message}{Environment.NewLine}{outputTextBlock.Text}";
             outputTextBlock.Refresh();
         }
 
