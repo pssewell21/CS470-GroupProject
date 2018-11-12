@@ -37,6 +37,11 @@ namespace Server
 
         private void StartButton_Click(object sender, EventArgs ea)
         {
+            Start();
+        }
+
+        public void Start()
+        {
             try
             {
                 AppendTextBox($"Server Started...");
