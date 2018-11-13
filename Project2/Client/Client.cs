@@ -10,6 +10,7 @@ namespace Client
 {
     public partial class Client : Form
     {
+        // Constants for network functionality
         private const int NETWORK_DISCOVERY_PORT = 800;
         private const int CLIENT_CONNECTION_PORT = 801;
         private const int TIMEOUT = 5000;
@@ -18,6 +19,7 @@ namespace Client
         private const string GET_DATA_MESSAGE = "GetData";
         private const string INVALID_MESSAGE = "BadRequest";
 
+        // Variables for network functionality
         private IPEndPoint _discoveryEndPoint;
         private UdpClient _udpClient;
         private IPEndPoint _dataEndPoint;
@@ -40,26 +42,29 @@ namespace Client
             await Task.Run(() => FindServer());
         }
 
+        // Thread to discover the server
         private void FindServer()
         {
             try
             {
+                // Debug printing
 #if DEBUG
                 DebugAppendTextBox($"Discovering Server...");
 #endif
-
+                // Local variables
                 _serverIpAddress = null;
-
                 _udpClient = new UdpClient();
                 _udpClient.Client.ReceiveTimeout = TIMEOUT;
-
+                
+                // Make the discovery message into a Byte array
                 var requestData = Encoding.ASCII.GetBytes(DISCOVER_MESSAGE);
-                //var requestData = Encoding.ASCII.GetBytes(INVALID_MESSAGE);
 
+                // Broadcast the discovery message
                 _discoveryEndPoint = new IPEndPoint(IPAddress.Broadcast, NETWORK_DISCOVERY_PORT);
                 _udpClient.EnableBroadcast = true;
                 _udpClient.Send(requestData, requestData.Length, _discoveryEndPoint);
 
+                // Listen for a response
                 try
                 {
                     var endPoint = new IPEndPoint(IPAddress.Any, 0);
@@ -69,7 +74,7 @@ namespace Client
 #if DEBUG
                     DebugAppendTextBox($"Received \"{serverResponse}\" from {endPoint.ToString()}. Ready to request data");
 #endif
-
+                    // Save the IP address the server responds with
                     _serverIpAddress = endPoint.Address;
                 }
                 catch (SocketException se)
@@ -86,6 +91,7 @@ namespace Client
                     }
                 }
 
+                // Close the UDPclient
                 _udpClient.Close();
             }
             catch (Exception e)
@@ -98,6 +104,7 @@ namespace Client
         {
             try
             {
+                // Debug printing
 #if DEBUG
                 DebugAppendTextBox($"Getting data from server...");
 #endif
@@ -105,10 +112,13 @@ namespace Client
                 // Create a new socket to connect to the server with
                 if (_socket == null)
                 {
+                    //Grab a port to use
                     var outboundPort = GetOutboundPort();
 
+                    // Create an endpoint with that port.
                     _dataEndPoint = new IPEndPoint(IPAddress.Any, outboundPort);
 
+                    // Set up the socket
                     _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP)
                     {
                         ReceiveTimeout = TIMEOUT
@@ -146,14 +156,17 @@ namespace Client
             }
         }
 
+        // Thread to retrieve the data from the server
         private void GetDataFromServer()
         {
             try
             {
+                // Change the request information string to a Byte array
                 var requestData = Encoding.ASCII.GetBytes(GET_DATA_MESSAGE);
 
                 lock (_socketLock)
                 {
+                    // Send the request
                     _socket.Send(requestData);
 
                     // Create a byte array to hold the received message
@@ -195,6 +208,7 @@ namespace Client
             return randomNumberGenerator.Next(51200, 52000);
         }
 
+        // Disconnects from the server
         private void Disconnect()
         {
             try
@@ -222,6 +236,7 @@ namespace Client
             }
         }
 
+        // Button to run the client
         private async void RunButton_Click(object sender, EventArgs e)
         {
             RunButton.Enabled = false;
@@ -239,6 +254,7 @@ namespace Client
             RunButton.Refresh();
         }
 
+        // Debug mode text display function
         private void DebugAppendTextBox(string message)
         {
             if (InvokeRequired)
@@ -252,6 +268,7 @@ namespace Client
             outputTextBlock.Refresh();
         }
         
+        // Non-Debug text display function
         private void ReleaseAppendTextBox(string message)
         {
             if (InvokeRequired)

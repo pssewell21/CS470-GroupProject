@@ -17,13 +17,16 @@ namespace Server
         private const int CLIENT_CONNECTION_PORT = 801;
         private const int MAX_QUEUED_CONNECTIONS = 8192;
 
+        // Other constants for network functionality
         private const string DISCOVER_MESSAGE = "DiscoverServer";
         private const string GET_DATA_MESSAGE = "GetData";
 
+        // Our store's data
         private string STORE_DATA = $"Welcome to Chick-Fil-A at Bridge Street Town Center in Huntsville, AL!{Environment.NewLine}" +
             $"We think that we should be about more than just selling chicken. We should be a part of our customers’ lives and the communities in which we serve.{Environment.NewLine}" +
             $"Visit us at chick-fil-a.com to learn more about our store and place an order.";
 
+        // Variables for network functionality
         private IPEndPoint _discoveryEndPoint;
         private UdpClient _udpClient;
         private IPEndPoint _clientEndPoint;
@@ -37,11 +40,13 @@ namespace Server
             InitializeComponent();
         }
 
+        // Button to start the server
         private void StartButton_Click(object sender, EventArgs ea)
         {
             Start();
         }
 
+        // Function to start the server.
         public void Start()
         {
             try
@@ -50,11 +55,13 @@ namespace Server
 
                 StartButton.Enabled = false;
 
+                // Create the UdpClient
                 if (_udpClient == null)
                 {
                     _udpClient = new UdpClient(NETWORK_DISCOVERY_PORT);
                 }
 
+                // Create the endpoint for the client
                 _clientEndPoint = new IPEndPoint(IPAddress.Any, CLIENT_CONNECTION_PORT);
 
                 Thread.Sleep(300);
@@ -88,8 +95,11 @@ namespace Server
                     // Receive network discovery messages from the client
                     _discoveryEndPoint = new IPEndPoint(IPAddress.Any, NETWORK_DISCOVERY_PORT);
                     var clientRequestData = _udpClient.Receive(ref _discoveryEndPoint);
+
+                    // Make the network discovery message into a string
                     var clientRequest = Encoding.ASCII.GetString(clientRequestData);
 
+                    // If the message was a valid discovery message
                     if (clientRequest.Equals(DISCOVER_MESSAGE))
                     {
                         AppendTextBox($"Received \"{clientRequest}\" from {_discoveryEndPoint.ToString()}. Sending response");
@@ -126,8 +136,10 @@ namespace Server
                             _localIpAddress = IPAddress.Loopback;
                         }
 
+                        // Make our IP address to a Byte array
                         var responseData = Encoding.ASCII.GetBytes(_localIpAddress.ToString());
 
+                        // Broadcast our IP address
                         _udpClient.Send(responseData, responseData.Length, _discoveryEndPoint);
                     }
                     else
@@ -167,6 +179,7 @@ namespace Server
                         // Convert to a string
                         var dataReceived = Encoding.ASCII.GetString(bytes, 0, bytesRead);
 
+                        // If the message is a valid data request
                         if (dataReceived.Equals(GET_DATA_MESSAGE))
                         {
                             AppendTextBox($"Received \"{dataReceived}\" from {socket.RemoteEndPoint}");
@@ -184,6 +197,7 @@ namespace Server
             }
         }
 
+        // Add a message to the textbox
         private void AppendTextBox(string message)
         {
             if (InvokeRequired)
