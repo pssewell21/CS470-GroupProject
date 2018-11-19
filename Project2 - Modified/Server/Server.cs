@@ -24,7 +24,7 @@ namespace Server
         // Our store's data
         private string STORE_DATA = $"Welcome to Chick-Fil-A at Bridge Street Town Center in Huntsville, AL!{Environment.NewLine}" +
             $"We think that we should be about more than just selling chicken. We should be a part of our customers’ lives and the communities in which we serve.{Environment.NewLine}" +
-            $"Visit us at chick-fil-a.com to learn more about our store and place an order.{Environment.NewLine}";
+            $"Visit us at chick-fil-a.com to learn more about our store and place an order.\n\r";
 
         // Variables for network functionality
         private IPEndPoint _discoveryEndPoint;
